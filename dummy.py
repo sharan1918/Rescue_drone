@@ -3,17 +3,17 @@ from io import BytesIO
 import cv2
 import numpy as np
 from ultralytics import YOLO
-from PIL import Image
-import google.generativeai as genai
-from google.generativeai.types import Part
+# from PIL import Image
+# import google.generativeai as genai
+
 
 app = Flask(__name__)
 model = YOLO("model_- 4 april 2025 18_39.pt")  # Load the YOLOv8 model
 
-# Configure Gemini
-genai.configure(api_key='AIzaSyAu-mvfNBqPwCFltYXfv9a6fan33yXXPuI')  # Replace with your actual API key
-model_name = 'gemini-pro-vision'
-client = genai.GenerativeModel(model_name)
+# # Configure Gemini
+# genai.configure(api_key='AIzaSyAu-mvfNBqPwCFltYXfv9a6fan33yXXPuI')  # Replace with your actual API key
+# model_name = 'gemini-pro-vision'
+# client = genai.GenerativeModel(model_name)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -47,28 +47,28 @@ def upload_file():
             message += f' at location ({latitude}, {longitude})'
         print(message)
         
-        # Convert OpenCV image to PIL Image for Gemini
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        pil_image = Image.fromarray(image_rgb)
-        pil_image.thumbnail([640, 640], Image.Resampling.LANCZOS)
-        # Convert to byte stream
-        buffer = BytesIO()
-        pil_image.save(buffer, format="JPEG")
-        buffer.seek(0)
-        image_bytes = buffer.read()
+        # # Convert OpenCV image to PIL Image for Gemini
+        # image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # pil_image = Image.fromarray(image_rgb)
+        # pil_image.thumbnail([640, 640], Image.Resampling.LANCZOS)
+        # # Convert to byte stream
+        # buffer = BytesIO()
+        # pil_image.save(buffer, format="JPEG")
+        # buffer.seek(0)
+        # image_bytes = buffer.read()
         
-        image_part = content_types.ImagePart(
-            mime_type='image/jpeg',
-            data=image_bytes,
-        )
+        # image_part = genai.types.ImagePart(
+        #     mime_type='image/jpeg',
+        #     data=image_bytes,
+        # )
 
-        # Gemini analysis
-        prompt = "Are any of the people in the image appearing stranded or needing help? Answer yes or no only."
-        response = client.generate_content([prompt, image_part])
+        # # Gemini analysis
+        # prompt = "Are any of the people in the image appearing stranded or needing help? Answer yes or no only."
+        # response = client.generate_content([prompt, image_part])
         
-        # Add Gemini's analysis to the message
-        message += f". Gemini analysis: {response.text}"
-        print(f"Gemini analysis: {response.text}")
+        # # Add Gemini's analysis to the message
+        # message += f". Gemini analysis: {response.text}"
+        # print(f"Gemini analysis: {response.text}")
     
     return message
 

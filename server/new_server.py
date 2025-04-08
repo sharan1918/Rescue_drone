@@ -3,9 +3,7 @@ from io import BytesIO
 import cv2
 import numpy as np
 from ultralytics import YOLO
-from PIL import Image
-import google.generativeai as genai
-from google.generativeai import Part
+
 
 
 # Initialize Flask app
@@ -13,10 +11,6 @@ app = Flask(__name__)
 
 # Load YOLOv8 model (make sure the .pt file is in the same directory or provide full path)
 model = YOLO("model_- 4 april 2025 18_39.pt")
-
-# Configure Gemini with your API key
-genai.configure(api_key='YOUR_GEMINI_API_KEY') # Replace with your actual API key
-gemini_client = genai.GenerativeModel('gemini-pro-vision')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -47,31 +41,6 @@ def upload_file():
         if latitude and longitude:
             message += f" at location ({latitude}, {longitude})"
         print(message)
-
-        # Convert OpenCV image to PIL for thumbnailing
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        pil_image = Image.fromarray(image_rgb)
-        pil_image.thumbnail((640, 640), Image.Resampling.LANCZOS)
-
-        # Convert PIL image to byte stream for potential later use (optional for Gemini)
-        # buffer = BytesIO()
-        # pil_image.save(buffer, format="JPEG")
-        # buffer.seek(0)
-
-        # Use Gemini for analysis
-        prompt = "Are any of the people in the image appearing stranded or needing help? Answer yes or no only."
-        try:
-            # Reset the buffer to the beginning to read the image data again
-            in_memory_file.seek(0)
-            gemini_response = gemini_client.generate_content(
-                [prompt, Part.from_data(data=in_memory_file.read(), mime_type=file.content_type)]
-            )
-            gemini_text = gemini_response.text.strip()
-            print(f"🤖 Gemini response: {gemini_text}")
-            message += f". Gemini analysis: {gemini_text}"
-        except Exception as e:
-            print(f"⚠️ Gemini error: {e}")
-            message += ". Gemini analysis failed."
 
     return jsonify({'message': message})
 

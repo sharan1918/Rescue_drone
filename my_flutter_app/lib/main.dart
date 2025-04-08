@@ -163,7 +163,7 @@ class _CameraViewState extends State<CameraView> {
   }
 
   void startAutoCapture() {
-    timer = Timer.periodic(Duration(seconds: 1), (Timer t) async {
+    timer = Timer.periodic(Duration(seconds: 3), (Timer t) async {
       if (controller != null && controller!.value.isInitialized) {
         takePictureAndUpload();
       }
@@ -210,7 +210,7 @@ class _CameraViewState extends State<CameraView> {
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    var uri = Uri.parse("https://f4bd-106-51-168-0.ngrok-free.app/upload");
+    var uri = Uri.parse("https://5e3f-106-51-168-0.ngrok-free.app/upload");
     var request = http.MultipartRequest('POST', uri);
     
     // Add image file
