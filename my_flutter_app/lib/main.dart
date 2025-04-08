@@ -115,6 +115,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:geolocator/geolocator.dart';
 
 List<CameraDescription>? cameras;
 
@@ -182,9 +183,42 @@ class _CameraViewState extends State<CameraView> {
   }
 
   Future<void> uploadImage(File file) async {
-    var uri = Uri.parse("https://ebe9-106-51-168-0.ngrok-free.app/upload");  // Replace with your actual ngrok URL
+    // First check if location services are enabled
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      print('Location services are disabled');
+      return;
+    }
+
+    // Check and request location permissions
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        print('Location permissions are denied');
+        return;
+      }
+    }
+    
+    if (permission == LocationPermission.deniedForever) {
+      print('Location permissions are permanently denied');
+      return;
+    }
+
+    // Get current location
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    var uri = Uri.parse("https://f4bd-106-51-168-0.ngrok-free.app/upload");
     var request = http.MultipartRequest('POST', uri);
+    
+    // Add image file
     request.files.add(await http.MultipartFile.fromPath('image', file.path));
+    
+    // Add location data
+    request.fields['latitude'] = position.latitude.toString();
+    request.fields['longitude'] = position.longitude.toString();
 
     try {
       var response = await request.send();
