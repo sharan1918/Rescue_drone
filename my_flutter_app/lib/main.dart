@@ -163,7 +163,7 @@ class _CameraViewState extends State<CameraView> {
   }
 
   void startAutoCapture() {
-    timer = Timer.periodic(Duration(seconds: 3), (Timer t) async {
+    timer = Timer.periodic(Duration(seconds: 6), (Timer t) async {
       if (controller != null && controller!.value.isInitialized) {
         takePictureAndUpload();
       }
