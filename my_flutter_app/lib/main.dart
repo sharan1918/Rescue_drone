@@ -134,13 +134,88 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: CameraView(),
+      home: UrlInputPage(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
+class UrlInputPage extends StatefulWidget {
+  @override
+  _UrlInputPageState createState() => _UrlInputPageState();
+}
+
+class _UrlInputPageState extends State<UrlInputPage> {
+  final TextEditingController _urlController = TextEditingController();
+  String? _errorText;
+
+  void _validateAndProceed() {
+    String url = _urlController.text.trim();
+    if (url.isEmpty) {
+      setState(() => _errorText = 'Please enter a URL');
+      return;
+    }
+    
+    // Basic URL validation
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      setState(() => _errorText = 'Please enter a valid URL');
+      return;
+    }
+
+    // Navigate to CameraView with the URL
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraView(serverUrl: url),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Enter Server URL'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: _urlController,
+              decoration: InputDecoration(
+                labelText: 'Server URL',
+                hintText: 'https://example.com',
+                errorText: _errorText,
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.url,
+              onSubmitted: (_) => _validateAndProceed(),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _validateAndProceed,
+              child: Text('Start Camera'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class CameraView extends StatefulWidget {
+  final String serverUrl;
+  
+  CameraView({required this.serverUrl});
+
   @override
   _CameraViewState createState() => _CameraViewState();
 }
@@ -163,7 +238,7 @@ class _CameraViewState extends State<CameraView> {
   }
 
   void startAutoCapture() {
-    timer = Timer.periodic(Duration(seconds: 6), (Timer t) async {
+    timer = Timer.periodic(Duration(seconds: 5), (Timer t) async {
       if (controller != null && controller!.value.isInitialized) {
         takePictureAndUpload();
       }
@@ -210,7 +285,7 @@ class _CameraViewState extends State<CameraView> {
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    var uri = Uri.parse("https://5e3f-106-51-168-0.ngrok-free.app/upload");
+    var uri = Uri.parse("${widget.serverUrl}/upload");
     var request = http.MultipartRequest('POST', uri);
     
     // Add image file

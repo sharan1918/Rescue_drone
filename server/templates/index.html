@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        .result-container {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            text-align: left;
+        }
+        .detection-message {
+            font-size: 1.1em;
+            color: #222;
+            margin: 5px 0;
+        }
+        .gemini-response {
+            color: #666;
+            font-style: italic;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Detection Results</h1>
+    <div id="history"></div>
+
+    <script>
+        async function fetchDetections() {
+            try {
+                const res = await fetch('/detection_history');
+                const data = await res.json();
+
+                const historyDiv = document.getElementById('history');
+                historyDiv.innerHTML = '';
+
+                if (data.length === 0) {
+                    historyDiv.innerHTML = '<p>No detections yet.</p>';
+                    return;
+                }
+
+                data.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.classList.add('result-container');
+                    div.innerHTML = `
+                        <div class="detection-message">${entry.message}</div>
+                        <div class="gemini-response">Gemini Response: ${entry.gemini_analysis}</div>
+                        <div class="timestamp">Timestamp: ${entry.timestamp}</div>
+                    `;
+                    historyDiv.appendChild(div);
+                });
+            } catch (err) {
+                console.error('Failed to fetch history:', err);
+            }
+        }
+
+        fetchDetections();
+        setInterval(fetchDetections, 3000); // Poll every 3 sec
+    </script>
+</body>
+</html>
