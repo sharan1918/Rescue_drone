@@ -10,6 +10,7 @@ from twilio.rest import Client
 from datetime import datetime
 import os
 import threading
+import requests
 
 # === Load environment variables ===
 load_dotenv()
@@ -32,7 +33,7 @@ lock = threading.Lock()
 
 # === Store detection history ===
 detection_history = []
-
+detected_people = []
 # === SMS sending ===
 def send_sms(people_count, latitude, longitude):
     message = f"Distress Alert: {people_count} people detected in need. Location: {latitude}, {longitude}"
@@ -48,6 +49,20 @@ def upload_file():
 
         latitude = request.form.get('latitude')
         longitude = request.form.get('longitude')
+        url = f"https://nominatim.openstreetmap.org/reverse"
+        params = {
+            'lat': latitude,
+            'lon': longitude,
+            'format': 'json'
+        }
+
+        response = requests.get(url, params=params, headers={'User-Agent': 'MyApp'})
+        data = response.json()
+
+        # Extract address
+        address = data.get('display_name')
+
+        print(f"The address is: {address}")
 
         file = request.files['image']
         in_memory_file = BytesIO()
@@ -86,7 +101,7 @@ def upload_file():
                 print(message)
                 print(f"Gemini Response: {gemini_response_text}")
 
-                if gemini_response_text.lower().startswith("yes"):
+                if gemini_response_text and gemini_response_text.lower().startswith("yes"):
                     send_sms(people_count, latitude, longitude)
 
             except Exception as e:
@@ -96,8 +111,19 @@ def upload_file():
         detection_entry = {
             'message': message,
             'gemini_analysis': gemini_response_text or "No response",
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'address': address
         }
+
+        if gemini_response_text and gemini_response_text.lower().startswith("yes"):
+            people_det = {
+                'message': message,
+                'gemini_analysis': gemini_response_text or "No response",
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'address': address
+            }
+            detected_people.append(people_det)
+
         detection_history.append(detection_entry)
 
         return jsonify({
@@ -112,6 +138,10 @@ def index():
 
 @app.route('/detection_history')
 def get_detection_history():
+    return jsonify(detected_people[::-1])  # Return last 10 entries (newest first)
+
+@app.route('/live_feed')
+def get_detection_historys():
     return jsonify(detection_history[-10:][::-1])  # Return last 10 entries (newest first)
 
 @app.route('/print_detection_history')
@@ -120,5 +150,5 @@ def print_detection_history():
     return "Detection history printed to console"
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 5000))
     app.run(debug=True, host='0.0.0.0', port=port)

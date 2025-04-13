@@ -228,7 +228,7 @@ class _CameraViewState extends State<CameraView> {
   void initState() {
     super.initState();
     if (cameras != null && cameras!.isNotEmpty) {
-      controller = CameraController(cameras![0], ResolutionPreset.medium);
+      controller = CameraController(cameras![0], ResolutionPreset.high);
       controller!.initialize().then((_) {
         if (!mounted) return;
         setState(() {});
@@ -319,6 +319,18 @@ class _CameraViewState extends State<CameraView> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Auto Capture & Upload"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.close),
+            onPressed: () {
+              timer?.cancel();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => UrlInputPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: controller == null || !controller!.value.isInitialized
           ? Center(child: CircularProgressIndicator())

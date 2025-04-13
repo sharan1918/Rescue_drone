@@ -3,14 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detection History</title>
+    <title>Human Rescue Detection System</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
             max-width: 800px;
             margin: 0 auto;
+        }
+        .right-pane {
+            width: 300px;
+            background-color: #f5f5f5;
             padding: 20px;
-            text-align: center;
+            height: 100vh;
+            overflow-y: auto;
+            border-left: 1px solid #ddd;
         }
         .result-container {
             margin: 20px 0;
@@ -34,11 +47,22 @@
             font-size: 0.8em;
             margin-top: 5px;
         }
+        .address {
+            color: #444;
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
-    <h1>Detection Results</h1>
-    <div id="history"></div>
+    <div class="main-content">
+        <h1>Detection Results</h1>
+        <div id="history"></div>
+    </div>
+    <div class="right-pane">
+        <h2>Live Feed</h2>
+        <div id="live-feed"></div>
+    </div>
 
     <script>
         async function fetchDetections() {
@@ -60,6 +84,7 @@
                     div.innerHTML = `
                         <div class="detection-message">${entry.message}</div>
                         <div class="gemini-response">Gemini Response: ${entry.gemini_analysis}</div>
+                        <div class="address">Address: ${entry.address || 'No address available'}</div>
                         <div class="timestamp">Timestamp: ${entry.timestamp}</div>
                     `;
                     historyDiv.appendChild(div);
@@ -69,8 +94,39 @@
             }
         }
 
+        async function fetchLiveFeed() {
+            try {
+                const res = await fetch('/live_feed');
+                const data = await res.json();
+
+                const liveFeedDiv = document.getElementById('live-feed');
+                liveFeedDiv.innerHTML = '';
+
+                if (data.length === 0) {
+                    liveFeedDiv.innerHTML = '<p>No live feed data available.</p>';
+                    return;
+                }
+
+                data.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.classList.add('result-container');
+                    div.innerHTML = `
+                        <div class="detection-message">${entry.message}</div>
+                        <div class="gemini-response">Gemini Response: ${entry.gemini_analysis}</div>
+                        <div class="address">Address: ${entry.address || 'No address available'}</div>
+                        <div class="timestamp">Timestamp: ${entry.timestamp}</div>
+                    `;
+                    liveFeedDiv.appendChild(div);
+                });
+            } catch (err) {
+                console.error('Failed to fetch live feed:', err);
+            }
+        }
+
         fetchDetections();
-        setInterval(fetchDetections, 3000); // Poll every 3 sec
+        fetchLiveFeed();
+        setInterval(fetchDetections, 3000);
+        setInterval(fetchLiveFeed, 3000); // Poll live feed every 3 sec
     </script>
 </body>
 </html>

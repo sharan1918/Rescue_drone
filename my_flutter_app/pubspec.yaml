@@ -1,4 +1,4 @@
-name: my_flutter_app
+name: Dronecam
 description: "Streams camera feed to a server"
 publish_to: 'none'
 version: 1.0.0+1
